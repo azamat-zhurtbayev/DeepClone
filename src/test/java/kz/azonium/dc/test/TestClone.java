@@ -1,10 +1,7 @@
 package kz.azonium.dc.test;
 
 import kz.azonium.dc.DeepCloneUtil;
-import kz.azonium.dc.test.model.Family;
-import kz.azonium.dc.test.model.Man;
-import kz.azonium.dc.test.model.Person;
-import kz.azonium.dc.test.model.Woman;
+import kz.azonium.dc.test.model.*;
 import org.junit.Test;
 
 import java.util.stream.Collectors;
@@ -15,30 +12,30 @@ public class TestClone {
     @Test
     public void testClonePerson() throws InstantiationException, IllegalAccessException {
         Family family = new Family();
-        family.setHusband(new Man("Alex", 30));
-        family.setWife(new Woman("Ann", 28));
+        family.setHusband(new Man("Alex", 30, Color.BLACK));
+        family.setWife(new Woman("Ann", 28, Color.BLUE));
         family.setChildren(
                 Stream.of(
-                        new Man("Max", 8),
-                        new Woman("Melissa", 5),
-                        new Man("Victor", 1)
+                        new Man("Max", 8, Color.ORANGE),
+                        new Woman("Melissa", 5, Color.ORANGE),
+                        new Man("Victor", 1, Color.GREEN)
                 ).collect(Collectors.toList())
         );
 
 
         Family familyHusband = new Family();
-        familyHusband.setHusband(new Man("Mike", 53));
-        familyHusband.setWife(new Woman("Alice", 52));
+        familyHusband.setHusband(new Man("Mike", 53, Color.YELLOW));
+        familyHusband.setWife(new Woman("Alice", 52, Color.RED));
         familyHusband.setChildren(
                 Stream.of(
-                        new Man("Bob", 35),
+                        new Man("Bob", 35, Color.WHITE),
                         family.getHusband(),
-                        new Woman("Chloe", 27)
+                        new Woman("Chloe", 27, Color.BLACK)
                 ).collect(Collectors.toList())
         );
 
         Family familyWife = new Family();
-        familyWife.setHusband(new Man("George", 50));
+        familyWife.setHusband(new Man("George", 50, Color.GREEN));
         familyWife.setChildren(
                 Stream.of(
                         family.getWife()
@@ -92,5 +89,6 @@ public class TestClone {
         assert clonedPerson.getName() != null;
         assert clonedPerson.getName().equals(person.getName());
         assert clonedPerson.getAge() == person.getAge();
+        assert clonedPerson.getFavoriteColor() == person.getFavoriteColor();
     }
 }
