@@ -19,11 +19,11 @@ public final class DeepCloneUtil {
         }
     }
 
-    public static <T>T clone(T o) throws IllegalAccessException, InstantiationException {
+    public static <T>T clone(T o) throws DeepCloneException {
         return clone(null, o);
     }
 
-    private static <T>T clone(Map<Object, Object> ctx, T o) throws InstantiationException, IllegalAccessException {
+    private static <T>T clone(Map<Object, Object> ctx, T o) throws DeepCloneException {
         if (o == null) return null;
         if (ctx == null) ctx = new HashMap<Object, Object>();
         if (ctx.containsKey(o)) return (T) ctx.get(o);
@@ -31,13 +31,22 @@ public final class DeepCloneUtil {
         if (o.getClass().isArray()) return (T) cloneArray(ctx, (T[])o);
 
         Class<T> clazz = (Class<T>) o.getClass();
-        T copy = (T) unsafe.allocateInstance(clazz);
+        T copy = null;
+        try {
+            copy = (T) unsafe.allocateInstance(clazz);
+        } catch (InstantiationException e) {
+            throw new DeepCloneException(String.format("Could not create instance of class '%s'", clazz.getName()), e);
+        }
         ctx.put(o, copy);
 
         for (Field f : getAllFields(clazz)) {
             if (!Modifier.isStatic(f.getModifiers())) {
                 f.setAccessible(true);
-                f.set(copy, clone(ctx, f.get(o)));
+                try {
+                    f.set(copy, clone(ctx, f.get(o)));
+                } catch (IllegalAccessException e) {
+                    throw new DeepCloneException(String.format("Could not set property '%s' for class '%s'", f.getName(), clazz.getName()), e);
+                }
             }
         }
 
@@ -55,7 +64,7 @@ public final class DeepCloneUtil {
         return result;
     }
 
-    private static <T>T[] cloneArray(Map<Object, Object> ctx, T[] array) throws IllegalAccessException, InstantiationException {
+    private static <T>T[] cloneArray(Map<Object, Object> ctx, T[] array) throws DeepCloneException {
         T[] copy = (T[]) Array.newInstance(array.getClass().getComponentType(), array.length);
         ctx.put(array, copy);
 

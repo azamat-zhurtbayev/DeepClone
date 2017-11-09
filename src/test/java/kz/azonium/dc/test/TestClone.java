@@ -1,16 +1,19 @@
 package kz.azonium.dc.test;
 
+import kz.azonium.dc.DeepCloneException;
 import kz.azonium.dc.DeepCloneUtil;
 import kz.azonium.dc.test.model.*;
 import org.junit.Test;
 
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class TestClone {
 
     @Test
-    public void testClonePerson() throws InstantiationException, IllegalAccessException {
+    public void testClonePerson() throws DeepCloneException {
         Family family = new Family();
         family.setHusband(new Man("Alex", 30, Color.BLACK));
         family.setWife(new Woman("Ann", 28, Color.BLUE));
@@ -90,5 +93,41 @@ public class TestClone {
         assert clonedPerson.getName().equals(person.getName());
         assert clonedPerson.getAge() == person.getAge();
         assert clonedPerson.getFavoriteColor() == person.getFavoriteColor();
+    }
+
+    @Test
+    public void testRecursive() throws DeepCloneException {
+        RecursiveModel main = new RecursiveModel(UUID.randomUUID().toString());
+        for (int i = 0; i < 10; i++) {
+            main.getChildren().add(new RecursiveModel(UUID.randomUUID().toString()));
+        }
+        main.getChildren().forEach(t -> t.getChildren().addAll(main.getChildren()));
+        main.getChildren().add(new Random(new Date().getTime()).nextInt(main.getChildren().size()), main);
+
+        List<RecursiveModel[]> tested = new LinkedList<>();
+        RecursiveModel clone = DeepCloneUtil.clone(main);
+        testClonedRecursiveModel(tested, main, clone);
+
+        System.out.println(String.format("Main Id: %s", main.getId()));
+        for (int i = 0; i < main.getChildren().size(); i++) {
+            System.out.println(String.format("Children[%d] Id: %s", i, main.getChildren().get(i).getId()));
+        }
+    }
+
+    private static void testClonedRecursiveModel(List<RecursiveModel[]> tested, RecursiveModel main, RecursiveModel clone) {
+        if (main == null && clone == null) return;
+        assert main != null && clone != null;
+        if (tested.stream().anyMatch(t -> t[0] == main && t[1] == clone)) return;
+        assert main != clone;
+        assert (main.getId().equals(clone.getId()));
+        tested.add(new RecursiveModel[] {main, clone});
+
+        if (main.getChildren() == null && clone.getChildren() == null) return;
+        assert main.getChildren() != null && clone.getChildren() != null;
+        assert main.getChildren() != clone.getChildren();
+        assert main.getChildren().size() == clone.getChildren().size();
+        for (int i = 0; i < main.getChildren().size(); i++) {
+            testClonedRecursiveModel(tested, main.getChildren().get(i), clone.getChildren().get(i));
+        }
     }
 }
