@@ -1,2 +1,6 @@
 # DeepClone
-Test project for https://github.com/Ecwid/new-job/blob/master/Deep-clone.md
+
+Utility for cloning any object of any complexity.
+
+Potential problems - lacks in memory usage caused by storing processed or processing elements.
+
